@@ -1,0 +1,191 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, Calendar, Clock, MapPin, FileText, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
+import { format, parseISO, startOfDay, isSameDay } from "date-fns";
+import { parseICS } from "../utils/icsParser";
+
+export default function TimetableImporter() {
+  const [events, setEvents] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
+  const [fileName, setFileName] = useState(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("machub_classes");
+    if (stored) {
+      try {
+        setEvents(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to parse stored classes");
+      }
+    }
+  }, []);
+
+  const handleFile = async (file) => {
+    if (!file || !file.name.endsWith(".ics")) {
+      return;
+    }
+
+    const text = await file.text();
+    const parsed = parseICS(text);
+    
+    setEvents(parsed);
+    setFileName(file.name);
+    localStorage.setItem("machub_classes", JSON.stringify(parsed));
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
+  const clearEvents = () => {
+    setEvents([]);
+    setFileName(null);
+    localStorage.removeItem("machub_classes");
+  };
+
+  const groupedEvents = events.reduce((acc, event) => {
+    const day = format(parseISO(event.start), "yyyy-MM-dd");
+    if (!acc[day]) acc[day] = [];
+    acc[day].push(event);
+    return acc;
+  }, {});
+
+  const sortedDays = Object.keys(groupedEvents).sort();
+  const today = startOfDay(new Date());
+
+  return (
+    <Card className="h-full bg-white shadow-xl border-0">
+      <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Calendar className="w-5 h-5 text-white" />
+            </div>
+            <CardTitle className="text-lg font-bold text-gray-900">My Schedule</CardTitle>
+          </div>
+          {fileName && (
+            <Button variant="ghost" size="sm" onClick={clearEvents} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        {events.length === 0 ? (
+          <div
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
+              dragActive
+                ? "border-purple-400 bg-purple-50"
+                : "border-gray-300 hover:border-gray-400 bg-gray-50"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".ics"
+              onChange={handleChange}
+              className="hidden"
+            />
+            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="font-bold text-gray-900 mb-2 text-lg">Import Your Schedule</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Drag & drop your .ics file here
+            </p>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Choose File
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            <AnimatePresence>
+              {sortedDays.map((day) => {
+                const dayDate = parseISO(day);
+                const isToday = isSameDay(dayDate, today);
+                
+                return (
+                  <motion.div
+                    key={day}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <h4 className="font-bold text-gray-900">
+                        {format(dayDate, "EEEE, MMM d")}
+                      </h4>
+                      {isToday && (
+                        <Badge className="bg-gradient-to-r from-amber-400 to-amber-600 text-white border-0 font-semibold">Today</Badge>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {groupedEvents[day].map((event, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 hover:shadow-md transition-all"
+                        >
+                          <h5 className="font-semibold text-gray-900 mb-2">
+                            {event.title}
+                          </h5>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span>
+                                {format(parseISO(event.start), "h:mm a")}
+                                {event.end && ` - ${format(parseISO(event.end), "h:mm a")}`}
+                              </span>
+                            </div>
+                            {event.location && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                <span>{event.location}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
