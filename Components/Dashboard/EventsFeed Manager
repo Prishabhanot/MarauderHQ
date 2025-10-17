@@ -1,0 +1,158 @@
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Calendar, Plus, X, Link as LinkIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+export default function EventsFeedManager() {
+  const [feeds, setFeeds] = useState([]);
+  const [newFeedUrl, setNewFeedUrl] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("machub_subs");
+    if (stored) {
+      try {
+        setFeeds(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to parse feeds");
+      }
+    }
+  }, []);
+
+  const saveFeedsToStorage = (updatedFeeds) => {
+    localStorage.setItem("machub_subs", JSON.stringify(updatedFeeds));
+  };
+
+  const addFeed = () => {
+    if (!newFeedUrl.trim()) return;
+
+    const newFeed = {
+      url: newFeedUrl,
+      enabled: true,
+      id: Date.now(),
+    };
+
+    const updated = [...feeds, newFeed];
+    setFeeds(updated);
+    saveFeedsToStorage(updated);
+    setNewFeedUrl("");
+  };
+
+  const removeFeed = (id) => {
+    const updated = feeds.filter((f) => f.id !== id);
+    setFeeds(updated);
+    saveFeedsToStorage(updated);
+  };
+
+  const toggleFeed = (id) => {
+    const updated = feeds.map((f) =>
+      f.id === id ? { ...f, enabled: !f.enabled } : f
+    );
+    setFeeds(updated);
+    saveFeedsToStorage(updated);
+  };
+
+  return (
+    <Card className="h-full bg-white shadow-xl border-0">
+      <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-cyan-50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+            <Calendar className="w-5 h-5 text-white" />
+          </div>
+          <CardTitle className="text-lg font-bold text-gray-900">Events & Clubs</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        <Tabs defaultValue="feeds" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4 bg-gray-100">
+            <TabsTrigger value="feeds" className="data-[state=active]:bg-white text-gray-700 data-[state=active]:text-gray-900 font-semibold">My Feeds</TabsTrigger>
+            <TabsTrigger value="add" className="data-[state=active]:bg-white text-gray-700 data-[state=active]:text-gray-900 font-semibold">Add Feed</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="feeds" className="space-y-3 max-h-80 overflow-y-auto">
+            <AnimatePresence>
+              {feeds.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">No feeds yet. Add your first calendar!</p>
+                </div>
+              ) : (
+                feeds.map((feed) => (
+                  <motion.div
+                    key={feed.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-xl hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Switch
+                        checked={feed.enabled}
+                        onCheckedChange={() => toggleFeed(feed.id)}
+                        className="data-[state=checked]:bg-green-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {new URL(feed.url).hostname}
+                        </p>
+                        <p className="text-xs text-gray-600 truncate">{feed.url}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFeed(feed.id)}
+                      className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </TabsContent>
+
+          <TabsContent value="add" className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-semibold text-gray-900 mb-2 block">
+                  Calendar Feed URL
+                </label>
+                <Input
+                  placeholder="https://calendar.google.com/..."
+                  value={newFeedUrl}
+                  onChange={(e) => setNewFeedUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addFeed()}
+                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+              <Button
+                onClick={addFeed}
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold shadow-lg"
+                disabled={!newFeedUrl.trim()}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Calendar Feed
+              </Button>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="flex gap-2 mb-2">
+                <LinkIcon className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-semibold text-amber-900">How to get your feed URL</p>
+              </div>
+              <ul className="text-xs text-amber-800 space-y-1 ml-6 list-disc">
+                <li>Google Calendar: Settings → Calendar → Public URL</li>
+                <li>MSU Events: Check club websites for ICS links</li>
+                <li>Apple Calendar: Export → Share → Get Link</li>
+              </ul>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
