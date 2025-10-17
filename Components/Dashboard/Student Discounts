@@ -1,0 +1,210 @@
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ShoppingBag, Utensils, Tag, Calendar, Percent } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const STUDENT_DISCOUNTS = {
+  grocery: [
+    { name: "Fortino's", discount: "10% off", day: "Tuesdays", note: "Valid student ID required" },
+    { name: "Food Basics", discount: "10% off", day: "Tuesdays", note: "Physical card, image, or Mosaic sign-in" },
+    { name: "Shoppers Drug Mart", discount: "20% off", day: "Thursdays", note: "Valid student ID required" },
+    { name: "Bulk Barn", discount: "15% off", day: "Wednesdays", note: "Valid student ID required" },
+  ],
+  restaurants: [
+    { name: "Pita Pit", discount: "Student meal combo", day: "Mon-Fri, 11AM-4PM", note: "Westdale location only" },
+    { name: "Masala Corner", discount: "10% off", day: "Mondays & Tuesdays", note: "" },
+    { name: "Dragon Court", discount: "10% off", day: "Wednesdays", note: "" },
+    { name: "Mexican Kitchen", discount: "10% off", day: "Wed-Sat", note: "Any dish, dine-in or takeout (excl. groceries)" },
+    { name: "Mr. Sub", discount: "10% off", day: "Everyday", note: "All subs" },
+    { name: "Rannosh Restaurant", discount: "10% off", day: "Wednesdays", note: "" },
+    { name: "Wei Xiang Yuan", discount: "15% off", day: "Mon, Wed, Fri", note: "Takeout orders only" },
+    { name: "Tahini's Restaurant", discount: "10% off", day: "Everyday", note: "Main St. W. location only" },
+    { name: "Dominos Pizza", discount: "$10 Large 1-Top or Medium 4-Top", day: "Anytime", note: "Code: WISE (unlimited use)" },
+    { name: "Kinton Ramen", discount: "10% off all ramens", day: "Mon-Thu", note: "UpperJames location only" },
+    { name: "Mr. Gao", discount: "10% off", day: "Mon-Fri before 9PM", note: "" },
+  ],
+  specialty: [
+    { name: "Westdale Cupcakes", discount: "10-15% off", day: "Everyday", note: "" },
+    { name: "Latin Foods & Products", discount: "10% off", day: "Everyday", note: "" },
+    { name: "Bombay Spices", discount: "5% off", day: "All weekdays", note: "" },
+  ],
+  retail: [
+    { name: "Dulux Paints", discount: "25% off", day: "Everyday", note: "All orders" },
+    { name: "Storwell Self Storage", discount: "10% off", day: "Anytime", note: "Code: MCMASTERSTORAGE10" },
+    { name: "Rockcliff Auto Hamilton", discount: "$500 off", day: "Anytime", note: "Any car purchase" },
+    { name: "Flighthub", discount: "Up to 20% flights, 7% hotels, 5% cars", day: "Anytime", note: "Access via MSU portal" },
+    { name: "Sugarmoon Salon & Bode Spa", discount: "15% off", day: "Anytime", note: "Valid ID at checkout (excl. laser, IPL, Flex MD)" },
+  ],
+  recreation: [
+    { name: "Pursuit OCR", discount: "15% off", day: "Anytime", note: "Online only, Canada's largest indoor obstacle course" },
+    { name: "Escape Manor Hamilton", discount: "20% off", day: "Sun-Thu", note: "Code: STUDENT20 (ID at check-in)" },
+    { name: "Ontario Pickleball Store", discount: "10% off", day: "Anytime", note: "Code: McMaster10 (online & in-person)" },
+    { name: "Ontario Pickleball Courts", discount: "50% off first booking", day: "Anytime", note: "Code: Rally50 at 1185 Stone Church Rd E" },
+    { name: "UNiDAYS", discount: "Various discounts", day: "Anytime", note: "Database of student discounts" },
+  ],
+};
+
+export default function FoodDealsCard({ searchTerm = "" }) {
+  const [activeTab, setActiveTab] = useState("restaurants");
+
+  const filterDiscounts = (discounts) => {
+    if (!searchTerm) return discounts;
+    return discounts.filter((d) =>
+      d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.discount.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const allFiltered = {
+    grocery: filterDiscounts(STUDENT_DISCOUNTS.grocery),
+    restaurants: filterDiscounts(STUDENT_DISCOUNTS.restaurants),
+    specialty: filterDiscounts(STUDENT_DISCOUNTS.specialty),
+    retail: filterDiscounts(STUDENT_DISCOUNTS.retail),
+    recreation: filterDiscounts(STUDENT_DISCOUNTS.recreation),
+  };
+
+  return (
+    <Card className="h-full bg-white shadow-xl border-0">
+      <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Percent className="w-5 h-5 text-white" />
+            </div>
+            <CardTitle className="text-lg font-bold text-gray-900">Student Discounts</CardTitle>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4 bg-gray-100">
+            <TabsTrigger value="restaurants" className="data-[state=active]:bg-white text-gray-700 data-[state=active]:text-gray-900 font-semibold text-xs">
+              <Utensils className="w-3 h-3 mr-1" />
+              Food
+            </TabsTrigger>
+            <TabsTrigger value="grocery" className="data-[state=active]:bg-white text-gray-700 data-[state=active]:text-gray-900 font-semibold text-xs">
+              <ShoppingBag className="w-3 h-3 mr-1" />
+              Grocery
+            </TabsTrigger>
+            <TabsTrigger value="more" className="data-[state=active]:bg-white text-gray-700 data-[state=active]:text-gray-900 font-semibold text-xs">
+              <Tag className="w-3 h-3 mr-1" />
+              More
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="restaurants" className="mt-0">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              <AnimatePresence>
+                {allFiltered.restaurants.map((discount, idx) => (
+                  <DiscountCard key={idx} discount={discount} />
+                ))}
+              </AnimatePresence>
+              {allFiltered.restaurants.length === 0 && (
+                <EmptyState message="No restaurant discounts match your search" />
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="grocery" className="mt-0">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              <AnimatePresence>
+                {allFiltered.grocery.map((discount, idx) => (
+                  <DiscountCard key={idx} discount={discount} />
+                ))}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="text-xs font-semibold text-gray-700 uppercase mb-3">Specialty Foods</h4>
+                  {allFiltered.specialty.map((discount, idx) => (
+                    <DiscountCard key={`specialty-${idx}`} discount={discount} />
+                  ))}
+                </div>
+              </AnimatePresence>
+              {allFiltered.grocery.length === 0 && allFiltered.specialty.length === 0 && (
+                <EmptyState message="No grocery discounts match your search" />
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="more" className="mt-0">
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-700 uppercase mb-3 flex items-center gap-2">
+                  <ShoppingBag className="w-3 h-3" />
+                  Retail & Services
+                </h4>
+                <div className="space-y-2">
+                  <AnimatePresence>
+                    {allFiltered.retail.map((discount, idx) => (
+                      <DiscountCard key={idx} discount={discount} />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <h4 className="text-xs font-semibold text-gray-700 uppercase mb-3 flex items-center gap-2">
+                  <Tag className="w-3 h-3" />
+                  Recreation
+                </h4>
+                <div className="space-y-2">
+                  <AnimatePresence>
+                    {allFiltered.recreation.map((discount, idx) => (
+                      <DiscountCard key={`rec-${idx}`} discount={discount} />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {allFiltered.retail.length === 0 && allFiltered.recreation.length === 0 && (
+                <EmptyState message="No discounts match your search" />
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <p className="text-xs text-gray-600 italic">
+            💡 Always bring your McMaster student ID! Deals may change - verify with the business.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DiscountCard({ discount }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-4 hover:shadow-md transition-all"
+    >
+      <div className="flex items-start justify-between mb-1">
+        <h4 className="font-semibold text-gray-900">{discount.name}</h4>
+        <Badge variant="outline" className="text-xs bg-green-50 border-green-300 text-green-700 font-semibold">
+          {discount.discount}
+        </Badge>
+      </div>
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-sm text-gray-700">
+          <Calendar className="w-3 h-3 flex-shrink-0" />
+          <span>{discount.day}</span>
+        </div>
+        {discount.note && (
+          <p className="text-xs text-gray-600 italic">{discount.note}</p>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function EmptyState({ message }) {
+  return (
+    <div className="text-center py-8 text-gray-500 text-sm">
+      <Percent className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+      <p>{message}</p>
+    </div>
+  );
+}
