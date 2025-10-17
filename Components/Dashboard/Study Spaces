@@ -1,0 +1,69 @@
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Book, ExternalLink } from "lucide-react";
+
+const STUDY_SPACES = [
+  {
+    name: "Mills Memorial Library",
+    url: "https://library.mcmaster.ca/spaces/mills",
+    description: "Main library with quiet zones",
+  },
+  {
+    name: "Thode Library",
+    url: "https://library.mcmaster.ca/spaces/thode",
+    description: "Science & engineering library",
+  },
+  {
+    name: "Health Sciences Library",
+    url: "https://library.mcmaster.ca/spaces/hsl",
+    description: "Medical and health sciences",
+  },
+  {
+    name: "Library Room Bookings",
+    url: "https://library.mcmaster.ca/services/book-study-room",
+    description: "Reserve group study rooms",
+  },
+];
+
+export default function StudySpacesList() {
+  return (
+    <Card className="shadow-lg border-gray-200">
+      <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50/50 to-indigo-50/30">
+        <div className="flex items-center gap-2">
+          <Book className="w-5 h-5 text-purple-600" />
+          <CardTitle className="text-lg">Study Spaces</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="space-y-3">
+          {STUDY_SPACES.map((space, idx) => (
+            <div
+              key={idx}
+              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-1">
+                    {space.name}
+                  </h4>
+                  <p className="text-sm text-gray-600">{space.description}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  asChild
+                  className="flex-shrink-0"
+                >
+                  <a href={space.url} target="_blank" rel="noreferrer">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
